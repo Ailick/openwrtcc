@@ -436,7 +436,8 @@ endef
 
 define Package/hostapd-macsec/install
 	$(call Install/hostapd,$(1))
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hostapd/hostapd $(1)/usr/sbin/hostapd-macsec
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hostapd/hostapd $(1)/usr/sbin/
+	$(LN) hostapd $(1)/usr/sbin/hostapd-macsec
 endef
 
 Package/hostapd-mini/install = $(Package/hostapd/install)

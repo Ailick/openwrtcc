@@ -1,12 +1,8 @@
 include $(TOPDIR)/rules.mk
 
-ifeq ($(DUMP)$(PKG_VERSION),)
-  PKG_REV:=$(shell git ls-remote $(PKG_SOURCE_URL) $(PKG_BRANCH) | cut -b -7)
-  PKG_VERSION:=g$(PKG_REV)
-endif
-
 PKG_NAME:=firmware-ath11k-ipq60xx-spf
 PKG_RELEASE:=1
+PKG_VERSION:=11.4
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -50,13 +46,19 @@ define Build/Compile
 endef
 
 define Package/ath11k-firmware-ipq60xx-spf/install
-	$(INSTALL_DIR) $(1)/lib/firmware/IPQ6018
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/IPQ6018/* \
-		$(1)/lib/firmware/IPQ6018
+#	$(INSTALL_DIR) $(1)/lib/firmware/IPQ6018
 	$(INSTALL_DIR) $(1)/lib/firmware/ath11k/IPQ6018/hw1.0
+#	$(INSTALL_DATA) $(PKG_BUILD_DIR)/IPQ6018/* \
+#		$(1)/lib/firmware/IPQ6018
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/board-2.bin \
 		$(1)/lib/firmware/ath11k/IPQ6018/hw1.0/board-2.bin
+#	$(INSTALL_DATA) ./files/AX18/* \
+#		$(1)/lib/firmware/IPQ6018
 	$(INSTALL_DATA) ./files/AX18/* \
+		$(1)/lib/firmware/ath11k/IPQ6018/hw1.0/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/IPQ6018/* \
+		$(1)/lib/firmware/ath11k/IPQ6018/hw1.0/
+	$(LN) /lib/firmware/ath11k/IPQ6018/hw1.0/ \
 		$(1)/lib/firmware/IPQ6018
 #	$(INSTALL_DATA) ./files/qdss_trace_config.bin \
 #		$(1)/lib/firmware/ath11k/IPQ6018/hw1.0/qdss_trace_config.bin
@@ -65,6 +67,8 @@ endef
 define Package/qca-nss-fw-ipq60xx/install
 	$(INSTALL_DIR) $(1)/lib/firmware/
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/retail_router0.bin \
+		$(1)/lib/firmware/qca-nss0.bin
+	$(LN) /lib/firmware/qca-nss0.bin \
 		$(1)/lib/firmware/qca-nss0-retail.bin
 endef
 

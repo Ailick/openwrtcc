@@ -24,7 +24,7 @@
 / {
 	#address-cells = <0x2>;
 	#size-cells = <0x2>;
-	model = "AX18/M2/WF-1 IPQ6018/BSE";
+	model = "AX18/M2/WF-1 IPQ6018/AP-CP03-C1";
 	compatible = "qcom,ipq6018-cp03", "qcom,ipq6018";
 	interrupt-parent = <&intc>;
 	qcom,msm-id = <0x192 0x0>;
@@ -198,6 +198,7 @@
 			phy3: ethernet-phy@3 {
 				reg = <3>;
 			};
+
 		};
 
 		ess-switch@3a000000 {
@@ -281,8 +282,11 @@
 			compatible = "qcom,nss-macsec";
 			phy_addr = <0x18>;
 			phy_access_mode = <0x00>;
-			mdiobus = <0x47>;
+			mdiobus = <&mdio>;
 		};
+
+		/delete-node/ wifi1@f00000;
+		/delete-node/ wifi2@f00000;
 	};
 };
 
@@ -481,13 +485,62 @@
 	};
 };
 
+&CPU0 {
+	operating-points = <
+		/* kHz   uV (fixed) */
+		864000   1100000
+		1056000  1100000
+		1200000  1100000
+	>;
+	clock-latency = <200000>;
+};
+
+&CPU1 {
+	operating-points = <
+		/* kHz   uV (fixed) */
+		864000   1100000
+		1056000  1100000
+		1200000  1100000
+	>;
+	clock-latency = <200000>;
+};
+
+&CPU2 {
+	operating-points = <
+		/* kHz   uV (fixed) */
+		864000   1100000
+		1056000  1100000
+		1200000  1100000
+	>;
+	clock-latency = <200000>;
+};
+
+&CPU3 {
+	operating-points = <
+		/* kHz   uV (fixed) */
+		864000   1100000
+		1056000  1100000
+		1200000  1100000
+	>;
+	clock-latency = <200000>;
+};
+
 &nand {
 	pinctrl-0 = <&qpic_pins>;
 	pinctrl-names = "default";
 	status = "ok";
 };
 
+&cryptobam {
+	status = "ok";
+};
+
 &nss_crypto {
+	status = "ok";
+};
+
+&wifi0 {
+	compatible = "qcom,ipq6018-wifi";
 	status = "ok";
 };
 
