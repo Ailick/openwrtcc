@@ -1,0 +1,74 @@
+From 190652ce1b56a41ed3a99d9f9c9160deba34810b Mon Sep 17 00:00:00 2001
+From: Venkateswara Naralasetty <quic_vnaralas@quicinc.com>
+Date: Thu, 18 Nov 2021 12:28:31 +0530
+Subject: [PATCH] mac80211: simple tx for AP mode
+
+Introduced new API ieee80211_8023_xmit_ap to make tx simple and
+to avoid unnecessary checks for AP mode.
+
+Signed-off-by: Venkateswara Naralasetty <quic_vnaralas@quicinc.com>
+---
+ net/mac80211/tx.c | 40 ++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 40 insertions(+)
+
+diff --git a/net/mac80211/tx.c b/net/mac80211/tx.c
+index 8a4f3bd..df65e1e 100644
+--- a/net/mac80211/tx.c
++++ b/net/mac80211/tx.c
+@@ -4360,6 +4360,41 @@ out_free:
+ 	kfree_skb(skb);
+ }
+ 
++void ieee80211_8023_xmit_ap(struct ieee80211_sub_if_data *sdata,
++			    struct net_device *dev, struct sta_info *sta,
++			    struct ieee80211_key *key, struct sk_buff *skb)
++{
++	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
++	struct ethhdr *ehdr = (struct ethhdr *)skb->data;
++	struct ieee80211_local *local = sdata->local;
++	struct ieee80211_sta *pubsta = NULL;
++	struct ieee80211_tx_control control = {};
++	unsigned char *ra = ehdr->h_dest;
++	bool multicast;
++
++	multicast = is_multicast_ether_addr(ra);
++
++	memset(info, 0, sizeof(*info));
++
++	if (unlikely(skb->sk &&
++		     skb_shinfo(skb)->tx_flags & SKBTX_WIFI_STATUS))
++		info->ack_frame_id = ieee80211_store_ack_skb(local, skb,
++							     &info->flags, NULL);
++
++	info->flags |= IEEE80211_TX_CTL_HW_80211_ENCAP;
++	info->control.vif = &sdata->vif;
++
++	if (key)
++		info->control.hw_key = &key->conf;
++
++	if (sta && sta->uploaded)
++		pubsta = &sta->sta;
++
++	control.sta = pubsta;
++
++	drv_tx(local, &control, skb);
++}
++
+ netdev_tx_t ieee80211_subif_start_xmit_8023(struct sk_buff *skb,
+ 					    struct net_device *dev)
+ {
+@@ -4399,6 +4434,11 @@ netdev_tx_t ieee80211_subif_start_xmit_8023(struct sk_buff *skb,
+ 	if (key && (!(key->flags & KEY_FLAG_UPLOADED_TO_HARDWARE)))
+ 		goto skip_offload;
+ 
++	if (sdata->vif.type == NL80211_IFTYPE_AP) {
++		ieee80211_8023_xmit_ap(sdata, dev, sta, key, skb);
++		goto out;
++	}
++
+ tx_offload:
+ 	ieee80211_8023_xmit(sdata, dev, sta, key, skb);
+ 	goto out;
+-- 
+2.7.4
+

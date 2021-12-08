@@ -20,6 +20,62 @@ define AddDepends/crypto
   DEPENDS+= $(1)
 endef
 
+define KernelPackage/crypto-core
+  SUBMENU:=$(CRYPTO_MENU)
+  TITLE:=Core CryptoAPI modules
+  DEPENDS:=+kmod-crypto-iv
+  KCONFIG:= \
+	CONFIG_CRYPTO=y \
+	CONFIG_CRYPTO_HW=y \
+	CONFIG_CRYPTO_ALGAPI2
+  FILES:=$(LINUX_DIR)/crypto/crypto_algapi.ko
+  AUTOLOAD:=$(call AutoLoad,09,crypto_algapi)
+endef
+
+$(eval $(call KernelPackage,crypto-core))
+
+define KernelPackage/crypto-arc4
+  TITLE:=ARC4 (RC4) cipher CryptoAPI module
+  KCONFIG:=CONFIG_CRYPTO_ARC4
+  FILES:=$(LINUX_DIR)/crypto/arc4.ko
+  AUTOLOAD:=$(call AutoLoad,09,arc4)
+  $(call AddDepends/crypto)
+endef
+
+$(eval $(call KernelPackage,crypto-arc4))
+
+define KernelPackage/crypto-aes
+  TITLE:=AES cipher CryptoAPI module
+  KCONFIG:=CONFIG_CRYPTO_AES CONFIG_CRYPTO_AES_TI
+  FILES:=$(LINUX_DIR)/crypto/aes_generic.ko $(LINUX_DIR)/crypto/aes_ti.ko
+  AUTOLOAD:=$(call AutoLoad,09,aes_generic aes_ti)
+  $(call AddDepends/crypto)
+endef
+
+$(eval $(call KernelPackage,crypto-aes))
+
+define KernelPackage/crypto-ocf
+  TITLE:=OCF modules
+  DEPENDS:=+@OPENSSL_ENGINE_CRYPTO @!TARGET_uml +kmod-crypto-manager
+  KCONFIG:= \
+	CONFIG_OCF_OCF \
+	CONFIG_OCF_CRYPTODEV \
+	CONFIG_OCF_CRYPTOSOFT \
+	CONFIG_OCF_FIPS=y \
+	CONFIG_OCF_RANDOMHARVEST=y
+  FILES:= \
+	$(LINUX_DIR)/crypto/ocf/ocf.ko \
+	$(LINUX_DIR)/crypto/ocf/cryptodev.ko \
+	$(LINUX_DIR)/crypto/ocf/cryptosoft.ko
+  AUTOLOAD:=$(call AutoLoad,09, \
+	ocf \
+	cryptodev \
+	cryptosoft \
+  )
+  $(call AddDepends/crypto)
+endef
+
+$(eval $(call KernelPackage,crypto-ocf))
 
 define KernelPackage/crypto-acompress
   TITLE:=Asynchronous Compression operations

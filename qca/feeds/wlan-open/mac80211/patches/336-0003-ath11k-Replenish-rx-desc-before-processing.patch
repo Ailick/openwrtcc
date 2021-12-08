@@ -1,0 +1,55 @@
+From 298eb29ef990a3dc9385e4eccb88e444b2cfc031 Mon Sep 17 00:00:00 2001
+From: Tamizh Chelvam <quic_tamizhr@quicinc.com>
+Date: Mon, 15 Nov 2021 18:51:06 +0530
+Subject: [PATCH 4/4] ath11k: Replenish rx desc before processing
+
+Replenish rx desc before processing and ignore rxdma overflow
+error interrupts before adding to the list as we are dropping
+the rxdma overflow later.
+
+Signed-off-by: Tamizh Chelvam <quic_tamizhr@quicinc.com>
+---
+ drivers/net/wireless/ath/ath11k/dp_rx.c | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/ath/ath11k/dp_rx.c b/drivers/net/wireless/ath/ath11k/dp_rx.c
+index a17a014..7597f2c 100644
+--- a/drivers/net/wireless/ath/ath11k/dp_rx.c
++++ b/drivers/net/wireless/ath/ath11k/dp_rx.c
+@@ -3483,7 +3483,6 @@ try_again:
+ 		if (!num_buffs_reaped[i])
+ 			continue;
+ 
+-		ath11k_dp_rx_process_received_packets(ab, napi, &msdu_list[i], i);
+ 		ar = ab->pdevs[i].ar;
+ 		rx_ring = &ar->dp.rx_refill_buf_ring;
+ 
+@@ -3491,6 +3490,12 @@ try_again:
+ 					   HAL_RX_BUF_RBM_SW3_BM, GFP_ATOMIC, true, ar->buf_ids);
+ 	}
+ 
++	for (i = 0; i < ab->num_radios; i++) {
++		if (!num_buffs_reaped[i])
++			continue;
++
++		ath11k_dp_rx_process_received_packets(ab, napi, &msdu_list[i], i);
++	}
+ exit:
+ 	return total_msdu_reaped;
+ }
+@@ -5200,6 +5205,12 @@ int ath11k_dp_rx_process_wbm_err(struct ath11k_base *ab,
+ 		total_num_buffs_reaped++;
+ 		budget--;
+ 
++ 		if (err_info.err_rel_src == HAL_WBM_REL_SRC_MODULE_RXDMA &&
++ 		    err_info.err_code != HAL_REO_ENTR_RING_RXDMA_ECODE_TKIP_MIC_ERR) {
++			ab->soc_stats.rxdma_error[err_info.err_code]++;
++ 			dev_kfree_skb_any(msdu);
++ 			continue;
++ 		}
+ 		if (err_info.push_reason !=
+ 		    HAL_REO_DEST_RING_PUSH_REASON_ERR_DETECTED) {
+ 			dev_kfree_skb_any(msdu);
+-- 
+2.7.4
+

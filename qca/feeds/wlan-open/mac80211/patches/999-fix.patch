@@ -1,0 +1,13 @@
+diff --git a/drivers/net/wireless/ath/ath11k/Makefile b/drivers/net/wireless/ath/ath11k/Makefile
+index 4f4056d..1ed241a 100644
+--- a/drivers/net/wireless/ath/ath11k/Makefile
++++ b/drivers/net/wireless/ath/ath11k/Makefile
+@@ -1,5 +1,8 @@
+ # SPDX-License-Identifier: BSD-3-Clause-Clear
++
+ obj-$(CPTCFG_ATH11K) += ath11k.o
++CFLAGS_REMOVE_qmi.o = -Wall -Werror
++CFLAGS_REMOVE_cfr.o = -Wall -Werror
+ ath11k-y += core.o \
+ 	    hal.o \
+ 	    hal_tx.o \
